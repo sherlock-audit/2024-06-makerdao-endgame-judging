@@ -1,9 +1,12 @@
-# Issue M-1: An attacker can exploit LSUrn address collisions using create2 for complete control of Maker protocol 
+# Issue I-01: An attacker can exploit LSUrn address collisions using create2 for complete control of Maker protocol
 
-Source: https://github.com/sherlock-audit/2024-06-makerdao-endgame-judging/issues/64 
+Source: https://github.com/sherlock-audit/2024-06-makerdao-endgame-judging/issues/64
 
-## Found by 
+The protocol has acknowledged this issue.
+
+## Found by
 00xSEV, Yashar, hash
+
 ## Summary
 
 An attacker can use brute force to find a collision between a new urn address (dependent solely on `msg.sender`) and an EOA controlled by the attacker. While this currently costs between $1.5 million and several million dollars (detailed in "Vulnerability Details"), the cost is decreasing, making the attack more feasible over time.
@@ -79,12 +82,14 @@ The [Bitcoin network hashrate](https://www.blockchain.com/explorer/charts/hash-r
 18. Create a `hat` and vote for it with all the stolen power (almost all active voters), thereby gaining full control of the system:
     1. Most active voters are VoteDelegates:
         1. This can be verified in the "Supporters" section of the [latest vote](https://vote.makerdao.com/executive/template-executive-vote-lite-psm-usdc-a-phase-1-setup-spark-proxy-spell-july-25-2024).
-    2. Although only [11.7% of MKR is currently delegated](https://governance-metrics-dashboard.vercel.app/), this percentage is expected to grow (increasing voter participation is a key goal of EndGame, as outlined in ["Improved voter participation"](https://expenses-dev.makerdao.network/endgame#key-changes), [#2](https://endgame.makerdao.com/tokenomics/subdao-tokenomics#stated-goals), and [key goal here](https://endgame.makerdao.com/maker-core/governance/easy-governance-frontend#usability-goals)). Others most likely will not be able to gather more votes within [16 hours](https://etherscan.io/address/0xbe286431454714f511008713973d3b053a2d38f3#readContract#F2) to prevent the attacker's `hat` from being selected.
+    2. Although only [11.7\% of MKR is currently delegated](https://governance-metrics-dashboard.vercel.app/), this percentage is expected to grow (increasing voter participation is a key goal of EndGame, as outlined in ["Improved voter participation"](https://expenses-dev.makerdao.network/endgame#key-changes), [#2](https://endgame.makerdao.com/tokenomics/subdao-tokenomics#stated-goals), and [key goal here](https://endgame.makerdao.com/maker-core/governance/easy-governance-frontend#usability-goals)). Others most likely will not be able to gather more votes within [16 hours](https://etherscan.io/address/0xbe286431454714f511008713973d3b053a2d38f3#readContract#F2) to prevent the attacker's `hat` from being selected. \\
+
 
 ### Result:
 - The attacker gains almost all the voting power in the system (most active voters are VoteDelegates).
 - Liquidations and withdrawals are disabled; funds are locked in `attackersVD`, effectively immobilizing all LSE.
 - The attacker gains full control of the system through `hat` election.
+
 
 ### Other Variations:
 - An `eoa11` can be replaced with a contract created by `eoa3`. The address of the contract can be brute-forced in the same way as `eoa11`. The contract performs step 2 instead of `eoa11` and self-destructs in the same transaction.
@@ -883,23 +888,20 @@ Manual Review
 
 
 
-## Discussion
-
-**sherlock-admin2**
-
-1 comment(s) were left on this issue during the judging contest.
-
-**Audittens** commented:
-> While the described vector for the attack is correct, its estimated cost is incorrect, because it relies on the blog post that shows only the cost of computing 2^{80} hashes. In order to find the collision among them a big overhead is required due to memory limitations and impossibility to calculate these hashes in parallel. The correct price estimation is shown in the https://eips.ethereum.org/EIPS/eip-3607, which is 10 billion USD. Here https://hackmd.io/Vzhp5YJyTT-LhWm_s0JQpA is the detailed explanation by the EIP-3607 author, why the cost of this attack is much bigger compared to only computing of 2^{80} hashes.
 
 
 
-# Issue M-2: Leftover dust debt can cause liquidation auction to occur at significantly lowered price 
 
-Source: https://github.com/sherlock-audit/2024-06-makerdao-endgame-judging/issues/107 
+# Issue I-02: Leftover dust debt can cause liquidation auction to occur at significantly lowered price
 
-## Found by 
+Source: https://github.com/sherlock-audit/2024-06-makerdao-endgame-judging/issues/107
+
+The protocol has acknowledged this issue.
+
+
+## Found by
 hash
+
 ## Summary
 Using `frob` to refund the gem inside `onRemove` can disallow liquidations due to dust check
 
@@ -1065,24 +1067,4 @@ Manual Review
 
 ## Recommendation
 Use `grab` instead of `frob` to update the gem balance
-
-
-
-## Discussion
-
-**z3s**
-
-The protocol team comments:
-> Indeed this function should be using `grab` instead of `frob` as it is the natural way to do it (we will fix it). Unfortunately `frob` has the dust limitation even when adding collateral and there is existing debt (which was not really needed).
-We can also agree if this get to occur it could be considered as a medium impact, however the **likelihood of this happening is extremely low**.
-
-> The conditions that need to be met in order to be triggered is that the liquidated urn took place as a partial one and before completing the dust value went higher than the part not being liquidated.
-The other option is that it was a full liquidation, but before it finished the user added a new position and then the dust got higher than that position (before completing the auction).
-Increasing dust value is not a common thing, liquidations neither (and even less partial ones). So all of this happening in the exact order to trigger this issue makes the scenario a very rare case.
-
-> It could be argued that if the owner of the urn itself is the one willing to trigger this situation it would be more feasible. However making your own urn to liquidate and block the auction to happen is not really in benefit of the user excepting the user is trying to rebuy the collateral by the minimum price which is a risky move as it could be front run and the whole situation will still leave the user with a loss to the prev condition before being liquidated (due to penalty and exit fees).
-
-Although the likelihood of this happening is extremely low, but from Sherlock judging rules:
-> How to identify a medium issue:
-Causes a loss of funds but requires certain external conditions or specific states, or a loss is highly constrained. The losses must exceed small, finite amount of funds, and any amount relevant based on the precision or significance of the loss.
 
